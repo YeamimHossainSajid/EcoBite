@@ -1,7 +1,8 @@
+import React from 'react';
 import { Card } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Leaf, Users, Store, Heart, Recycle, TrendingUp, ArrowRight, Zap, Sparkles, CheckCircle, Clock } from 'lucide-react';
+import { Leaf, Sprout, Tractor, CloudRain, BarChart3, ArrowRight, Zap, Sparkles, CheckCircle, Clock, Users, TrendingUp } from 'lucide-react';
 
 interface OnboardingProps {
   onComplete: () => void;
@@ -10,254 +11,248 @@ interface OnboardingProps {
 export function Onboarding({ onComplete }: OnboardingProps) {
   const features = [
     {
-      icon: <Users className="h-6 w-6 text-white" />,
-      title: "Household Food Sharing",
-      description: "List your surplus food and connect with neighbors who need it",
-      bgColor: "bg-emerald-500"
+      icon: <Sprout className="h-6 w-6 text-green-500" />,
+      title: "Smart Crop Monitoring",
+      description: "Real-time tracking of crop health, growth stages, and potential issues using AI-powered image analysis"
     },
     {
-      icon: <Store className="h-6 w-6 text-white" />,
-      title: "Business Surplus",
-      description: "Shops and restaurants offer discounted food before it goes to waste",
-      bgColor: "bg-blue-500"
+      icon: <CloudRain className="h-6 w-6 text-blue-500" />,
+      title: "Weather & Irrigation Analytics",
+      description: "Optimize water usage with smart irrigation recommendations based on weather forecasts and soil moisture"
     },
     {
-      icon: <Heart className="h-6 w-6 text-white" />,
-      title: "NGO Donations",
-      description: "Connect with NGOs to feed those in need in your community",
-      bgColor: "bg-rose-500"
+      icon: <Tractor className="h-6 w-6 text-orange-500" />,
+      title: "Equipment & Resource Tracking",
+      description: "Monitor farm equipment usage, maintenance schedules, and resource allocation for maximum efficiency"
     },
     {
-      icon: <Recycle className="h-6 w-6 text-white" />,
-      title: "Bio-Transformation",
-      description: "Food waste becomes compost, mushrooms, and insect protein",
-      bgColor: "bg-violet-500"
+      icon: <BarChart3 className="h-6 w-6 text-purple-500" />,
+      title: "Yield Prediction & Analytics",
+      description: "Accurate yield forecasts and performance analytics to help you plan harvests and maximize profits"
     },
     {
-      icon: <TrendingUp className="h-6 w-6 text-white" />,
-      title: "Progress Tracking",
-      description: "Monitor your impact with detailed analytics and insights",
-      bgColor: "bg-amber-500"
+      icon: <Leaf className="h-6 w-6 text-emerald-500" />,
+      title: "Sustainable Farming Practices",
+      description: "Get recommendations for eco-friendly farming methods that reduce environmental impact"
     }
   ];
 
   const stats = [
-    { number: '10K+', label: 'Active Users', icon: <Users className="h-5 w-5 text-emerald-600" /> },
-    { number: '50K+', label: 'Meals Shared', icon: <Heart className="h-5 w-5 text-emerald-600" /> },
-    { number: '95%', label: 'Waste Reduced', icon: <CheckCircle className="h-5 w-5 text-emerald-600" /> },
-    { number: '<2min', label: 'First Listing', icon: <Clock className="h-5 w-5 text-emerald-600" /> }
+    { number: '25K+', label: 'Farmers Joined', icon: <Users className="h-5 w-5" /> },
+    { number: '1M+', label: 'Acres Monitored', icon: <Leaf className="h-5 w-5" /> },
+    { number: '30%', label: 'Average Yield Increase', icon: <TrendingUp className="h-5 w-5" /> },
+    { number: '50%', label: 'Water Savings', icon: <CloudRain className="h-5 w-5" /> }
   ];
 
   const steps = [
     {
       number: '1',
-      title: 'List Your Surplus',
-      description: 'Share food you won\'t use from your home or business',
-      icon: <Leaf className="h-5 w-5 text-white" />
+      title: 'Setup Your Farm Profile',
+      description: 'Add your farm details, crop types, and land area to get personalized recommendations',
+      icon: <Leaf className="h-5 w-5" />
     },
     {
       number: '2',
-      title: 'Connect & Share',
-      description: 'Match with neighbors, NGOs, or businesses in need',
-      icon: <Users className="h-5 w-5 text-white" />
+      title: 'Connect Sensors & Devices',
+      description: 'Integrate weather stations, soil sensors, and IoT devices for real-time data collection',
+      icon: <Zap className="h-5 w-5" />
     },
     {
       number: '3',
-      title: 'Track Impact',
-      description: 'See how much waste you\'ve prevented and lives you\'ve helped',
-      icon: <Zap className="h-5 w-5 text-white" />
+      title: 'Get AI-Powered Insights',
+      description: 'Receive actionable insights on crop health, irrigation, pest control, and harvest timing',
+      icon: <BarChart3 className="h-5 w-5" />
     },
     {
       number: '4',
-      title: 'Earn Rewards',
-      description: 'Get points and recognition for your contributions',
-      icon: <TrendingUp className="h-5 w-5 text-white" />
+      title: 'Optimize Your Operations',
+      description: 'Implement recommendations to increase yields, reduce costs, and improve sustainability',
+      icon: <TrendingUp className="h-5 w-5" />
     }
   ];
 
   return (
-    <div className="min-h-screen bg-white py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-        {/* Hero Section */}
-        <div className="text-center space-y-8">
-          <div className="space-y-6 animate-in fade-in-50 duration-700 pt-12">
-            <div className="flex justify-center mb-6">
-              <div className="p-4 bg-emerald-100 rounded-2xl">
-                <div className="bg-emerald-600 p-3 rounded-xl">
-                  <Leaf className="w-8 h-8 text-white" />
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight tracking-tight">
-                Welcome to FoodFlow
-              </h1>
-              <Badge 
-                className="text-sm px-4 py-2 bg-emerald-100 text-emerald-700 border-0 font-medium"
-              >
-                <Sparkles className="w-4 h-4 mr-2" />
-                The Circular Food Solution
-              </Badge>
+    <div className="space-y-12">
+      {/* Hero Section */}
+      <div className="text-center space-y-6 relative">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-green-100/50 via-emerald-50/30 to-lime-100/50 rounded-3xl blur-3xl"></div>
+
+        <div className="space-y-3 animate-in fade-in-50 duration-700">
+          <div className="flex justify-center mb-4">
+            <div className="p-4 bg-gradient-to-br from-green-100 to-emerald-100 rounded-2xl shadow-lg">
+              <Leaf className="w-12 h-12 text-green-600" />
             </div>
           </div>
-          
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed font-light animate-in slide-in-from-bottom-4 duration-700">
-            Transform food surplus into sustainable solutions. Connect households, businesses, 
-            and communities to build a circular food economy that reduces waste and nourishes people.
-          </p>
+          <h1 className="text-5xl lg:text-6xl font-bold bg-gradient-to-r from-green-700 via-emerald-700 to-teal-700 bg-clip-text text-transparent leading-tight">
+            Welcome to FarmSmart
+          </h1>
+          <Badge 
+            variant="secondary"
+            className="text-sm px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-800 border-0 shadow-lg"
+          >
+            <Sparkles className="w-4 h-4 mr-1" />
+            The Future of Smart Farming
+          </Badge>
+        </div>
+        
+        <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed animate-in slide-in-from-bottom-4 duration-700">
+          Transform your farming operations with AI-powered insights. Monitor crops, optimize resources, 
+          and increase yields with our comprehensive farm management platform designed for modern agriculture.
+        </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8 animate-in slide-in-from-bottom-4 duration-1000">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 animate-in slide-in-from-bottom-4 duration-1000">
+          <Button 
+            size="lg" 
+            onClick={onComplete} 
+            className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 py-4 text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300 transform hover:scale-105"
+          >
+            Get Started Free
+            <ArrowRight className="h-5 w-5" />
+          </Button>
+          <Button 
+            variant="outline" 
+            size="lg"
+            className="px-8 py-4 text-lg border-2 border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-300"
+          >
+            Learn More
+          </Button>
+        </div>
+
+        <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 rounded-2xl border border-green-200/50 max-w-lg mx-auto shadow-lg animate-in slide-in-from-bottom-4 duration-500">
+          <div className="flex items-center gap-3 text-green-800 mb-2">
+            <div className="p-1 bg-green-500 rounded-full">
+              <CheckCircle className="h-4 w-4 text-white" />
+            </div>
+            <span className="font-semibold">Join 25,000+ Farmers Worldwide</span>
+          </div>
+          <p className="text-sm text-green-700">
+            Start optimizing your farm operations today
+          </p>
+        </div>
+      </div>
+
+      {/* Stats Section */}
+      <Card className="p-8 bg-gradient-to-r from-white to-green-50/30 border-0 shadow-xl backdrop-blur-sm">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          {stats.map((stat, index) => (
+            <div key={index} className="text-center group hover:scale-105 transition-transform duration-300">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl text-white group-hover:shadow-lg transition-shadow duration-300">
+                  {stat.icon}
+                </div>
+                <span className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">{stat.number}</span>
+              </div>
+              <p className="text-sm font-medium text-gray-600">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Features Section */}
+      <div className="space-y-12">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-4">
+            Powerful Farming Features
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Everything you need to manage your farm efficiently and sustainably
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <Card 
+              key={index} 
+              className="p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 bg-gradient-to-br from-white to-gray-50/50 border-0 shadow-lg group"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 p-3 bg-gradient-to-br from-green-100 to-emerald-100 rounded-xl group-hover:from-green-200 group-hover:to-emerald-200 transition-colors duration-300">
+                  {feature.icon}
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-3 text-gray-900">{feature.title}</h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">{feature.description}</p>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* How It Works Section */}
+      <Card className="p-12 bg-gradient-to-br from-green-50/50 via-white to-emerald-50/50 border-0 shadow-xl">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-4">
+            Get Started in 4 Easy Steps
+          </h2>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Join thousands of farmers already transforming their operations
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {steps.map((step, index) => (
+            <div key={index} className="text-center group">
+              <div className="relative mb-6">
+                <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-600 to-emerald-600 text-white rounded-2xl mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-110">
+                  <span className="text-xl font-bold">{step.number}</span>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-gradient-to-r from-green-200 to-emerald-200 -translate-x-4"></div>
+                )}
+              </div>
+              <h3 className="font-semibold mb-3 text-gray-900">{step.title}</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">{step.description}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* CTA Section */}
+      <Card className="p-12 text-center bg-gradient-to-br from-green-600/5 via-emerald-600/5 to-teal-600/5 border-0 shadow-2xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-green-100/20 via-emerald-100/20 to-teal-100/20 -z-10"></div>
+        
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-green-700 to-emerald-700 bg-clip-text text-transparent mb-4">
+              Ready to Transform Your Farm?
+            </h2>
+            <p className="text-gray-600 text-lg mb-8 max-w-3xl mx-auto leading-relaxed">
+              Join thousands of farmers who have increased their yields, reduced costs, and adopted 
+              sustainable practices with FarmSmart. Start your journey toward smarter farming today.
+            </p>
+          </div>
+          
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Button 
               size="lg" 
               onClick={onComplete} 
-              className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-semibold rounded-2xl"
+              className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-10 py-4 text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300 transform hover:scale-105"
             >
-              Get Started Free
+              Create Your Account
               <ArrowRight className="h-5 w-5" />
             </Button>
             <Button 
               variant="outline" 
               size="lg"
-              className="px-8 py-4 text-lg border-2 border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 text-gray-700 transition-all duration-300 font-medium rounded-2xl"
+              className="px-10 py-4 text-lg border-2 border-gray-300 hover:border-green-400 hover:bg-green-50 transition-all duration-300"
             >
-              Learn More
+              Contact Support
             </Button>
           </div>
-
-          <div className="mt-8 p-6 bg-emerald-50 rounded-2xl border border-emerald-100 max-w-md mx-auto shadow-sm animate-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center gap-3 text-emerald-700 mb-2">
-              <div className="p-1 bg-emerald-500 rounded-full">
-                <CheckCircle className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-semibold">Join 10,000+ Food Heroes</span>
+          
+          <div className="pt-8 border-t border-gray-200">
+            <div className="flex items-center justify-center gap-2 text-amber-600 mb-2">
+              <span className="text-lg">🌱</span>
+              <span className="font-medium">Sustainable Farming for Future Generations</span>
             </div>
-            <p className="text-sm text-emerald-600">
-              Start making a difference in your community today
+            <p className="text-sm text-gray-500 max-w-3xl mx-auto leading-relaxed">
+              Every innovation in farming contributes to a more sustainable future. Join us in creating 
+              a world where technology and tradition work together to feed our growing population.
             </p>
           </div>
         </div>
-
-        {/* Stats Section */}
-        <Card className="p-8 bg-white border border-gray-200 shadow-sm rounded-3xl">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center group">
-                <div className="flex items-center justify-center gap-3 mb-4">
-                  <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600 group-hover:shadow-md transition-all duration-300">
-                    {stat.icon}
-                  </div>
-                  <span className="text-3xl font-bold text-gray-900">{stat.number}</span>
-                </div>
-                <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Features Section */}
-        <div className="space-y-12">
-          <div className="text-center space-y-4">
-            <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-              How FoodFlow Works
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg font-light">
-              Our complete system for reducing food waste and helping communities
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((feature, index) => (
-              <Card 
-                key={index} 
-                className="p-6 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 bg-white border border-gray-200 rounded-2xl group"
-              >
-                <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 p-3 ${feature.bgColor} rounded-2xl text-white shadow-sm group-hover:shadow-md transition-shadow duration-300`}>
-                    {feature.icon}
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-gray-900 text-lg">{feature.title}</h3>
-                    <p className="text-gray-600 leading-relaxed text-sm font-light">{feature.description}</p>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* How It Works Section */}
-        <Card className="p-12 bg-emerald-50 border border-emerald-100 rounded-3xl shadow-sm">
-          <div className="text-center space-y-4 mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-              Get Started in 4 Easy Steps
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto text-lg font-light">
-              Join our circular food movement and start making an impact immediately
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => (
-              <div key={index} className="text-center group">
-                <div className="relative mb-8">
-                  <div className="flex items-center justify-center w-16 h-16 bg-emerald-600 text-white rounded-2xl mx-auto shadow-lg group-hover:shadow-xl transition-all duration-300 transform group-hover:scale-105">
-                    <span className="text-lg font-semibold">{step.number}</span>
-                  </div>
-                  {index < steps.length - 1 && (
-                    <div className="hidden lg:block absolute top-8 left-full w-full h-0.5 bg-emerald-200 -translate-x-4"></div>
-                  )}
-                </div>
-                <h3 className="font-semibold text-gray-900 text-lg mb-3">{step.title}</h3>
-                <p className="text-gray-600 leading-relaxed text-sm font-light">{step.description}</p>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* CTA Section */}
-        <Card className="p-12 text-center bg-gray-50 border border-gray-200 rounded-3xl shadow-sm">
-          <div className="space-y-8">
-            <div className="space-y-4">
-              <h2 className="text-4xl font-bold text-gray-900 tracking-tight">
-                Ready to Make a Difference?
-              </h2>
-              <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed font-light">
-                Join thousands of users already reducing food waste, helping their communities, 
-                and building a more sustainable future. Start your FoodFlow journey today.
-              </p>
-            </div>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button 
-                size="lg" 
-                onClick={onComplete} 
-                className="flex items-center gap-3 bg-emerald-600 hover:bg-emerald-700 text-white px-10 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 font-semibold rounded-2xl"
-              >
-                Create Your Account
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="lg"
-                className="px-10 py-4 text-lg border-2 border-gray-300 bg-white hover:bg-gray-50 hover:border-gray-400 text-gray-700 transition-all duration-300 font-medium rounded-2xl"
-              >
-                Contact Support
-              </Button>
-            </div>
-            
-            <div className="pt-8 border-t border-gray-300">
-              <div className="flex items-center justify-center gap-3 text-emerald-600 mb-3">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                <span className="font-semibold">Together We Can End Food Waste</span>
-              </div>
-              <p className="text-sm text-gray-500 max-w-3xl mx-auto leading-relaxed font-light">
-                Every small action contributes to a larger impact. Join us in creating a world where no food goes to waste and every community thrives.
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      </Card>
     </div>
   );
 }

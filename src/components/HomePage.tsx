@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
 import { 
   Search, Bell, ShoppingBag, MapPin, Truck, Recycle, 
-  TrendingUp, Award, Leaf, Home, User, ChevronRight, Sparkles
+  TrendingUp, Award, Leaf, User, ChevronRight, Sparkles,
+  Home, Utensils
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -13,7 +14,7 @@ interface HomePageProps {
   onLogout: () => void;
 }
 
-export function HomePage({ user, onNavigate }: HomePageProps) {
+export function HomePage({ user, onNavigate, onLogout }: HomePageProps) {
   const [activeNav, setActiveNav] = useState('home');
 
   return (

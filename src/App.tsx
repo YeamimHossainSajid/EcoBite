@@ -18,14 +18,6 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<'onboarding' | 'auth' | 'home' | 'surplus' | 'kitchen' | 'gamification' | 'network' | 'bio' | 'profile' | 'business' | 'ngo' | 'hub' | 'admin' | 'notifications'>('onboarding');
   const [user, setUser] = useState<any>(null);
 
-  // Remove the useEffect that checks localStorage to always show onboarding first
-  // useEffect(() => {
-  //   const seen = localStorage.getItem('hasSeenOnboarding');
-  //   if (seen === 'true') {
-  //     setCurrentScreen('auth');
-  //   }
-  // }, []);
-
   const handleOnboardingComplete = () => {
     localStorage.setItem('hasSeenOnboarding', 'true');
     setCurrentScreen('auth');
