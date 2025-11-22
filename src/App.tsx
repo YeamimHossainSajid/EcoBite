@@ -1,5 +1,4 @@
-import { useState, useEffect } from 'react';
-import { Onboarding } from './components/Onboarding';
+import { useState } from 'react';
 import { Auth } from './components/Auth';
 import { HomePage } from './components/HomePage';
 import { SurplusListing } from './components/SurplusListing';
@@ -17,13 +16,8 @@ import { Buyers } from './components/Buyers';
 import { Farmers } from './components/Farmers';
 
 export default function App() {
-  const [currentScreen, setCurrentScreen] = useState<'onboarding' | 'auth' | 'home' | 'surplus' | 'kitchen' | 'gamification' | 'network' | 'bio' | 'profile' | 'business' | 'ngo' | 'hub' | 'admin' | 'notifications' | 'buyers' | 'farmers'>('onboarding');
+  const [currentScreen, setCurrentScreen] = useState<'auth' | 'home' | 'surplus' | 'kitchen' | 'gamification' | 'network' | 'bio' | 'profile' | 'business' | 'ngo' | 'hub' | 'admin' | 'notifications' | 'buyers' | 'farmers'>('auth');
   const [user, setUser] = useState<any>(null);
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true');
-    setCurrentScreen('auth');
-  };
 
   const handleLogin = (userData: any) => {
     setUser(userData);
@@ -41,10 +35,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-background">
-      {currentScreen === 'onboarding' && (
-        <Onboarding onComplete={handleOnboardingComplete} />
-      )}
-      
       {currentScreen === 'auth' && (
         <Auth onLogin={handleLogin} />
       )}

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Plus, AlertTriangle, ChefHat, Calendar, Trash2, Brain, Camera, TrendingUp, MessageCircle, BarChart3, Globe, Upload, X, Send, Sparkles, ShoppingCart, Target, Zap, Leaf, DollarSign, Clock, CheckCircle2, Building2, Users, Store, Gift, ChefHat as ChefIcon, TrendingDown, Activity, PieChart, MapPin, Bell, FileText, Download } from 'lucide-react';
+import { ArrowLeft, Plus, AlertTriangle, ChefHat, Calendar, Trash2, Brain, Camera, TrendingUp, MessageCircle, BarChart3, Globe, Upload, X, Send, Sparkles, ShoppingCart, Target, Zap, Leaf, DollarSign, Clock, CheckCircle2, Building2, Users, Store, Gift, ChefHat as ChefIcon, TrendingDown, Activity, PieChart, MapPin, Bell, FileText, Download, Edit2, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from './ui/dialog';
 import { Input } from './ui/input';
@@ -15,6 +15,36 @@ interface SmartKitchenProps {
   onBack: () => void;
 }
 
+interface PantryItem {
+  id: number;
+  name: string;
+  expiry: number;
+  emoji: string;
+  urgent: boolean;
+  category: string;
+  quantity: string;
+  purchaseDate: string;
+  riskScore: number;
+  price: number;
+  expiryDate: string;
+  warningLevel: string;
+}
+
+const defaultPantryItems: PantryItem[] = [
+  { id: 1, name: 'Milk', expiry: 2, emoji: '🥛', urgent: true, category: 'dairy', quantity: '1L', purchaseDate: '2024-01-10', riskScore: 85, price: 3.50, expiryDate: '2024-01-13', warningLevel: '1 week' },
+  { id: 2, name: 'Eggs', expiry: 3, emoji: '🥚', urgent: true, category: 'protein', quantity: '12', purchaseDate: '2024-01-10', riskScore: 75, price: 4.00, expiryDate: '2024-01-14', warningLevel: '1 week' },
+  { id: 3, name: 'Tomatoes', expiry: 4, emoji: '🍅', urgent: false, category: 'vegetables', quantity: '500g', purchaseDate: '2024-01-09', riskScore: 60, price: 2.50, expiryDate: '2024-01-15', warningLevel: '1 week' },
+  { id: 4, name: 'Bread', expiry: 1, emoji: '🍞', urgent: true, category: 'grains', quantity: '1 loaf', purchaseDate: '2024-01-11', riskScore: 90, price: 2.00, expiryDate: '2024-01-12', warningLevel: '1 week' },
+  { id: 5, name: 'Cheese', expiry: 7, emoji: '🧀', urgent: false, category: 'dairy', quantity: '200g', purchaseDate: '2024-01-08', riskScore: 40, price: 5.00, expiryDate: '2024-01-18', warningLevel: '3 weeks' },
+  { id: 6, name: 'Carrots', expiry: 5, emoji: '🥕', urgent: false, category: 'vegetables', quantity: '1kg', purchaseDate: '2024-01-09', riskScore: 50, price: 1.50, expiryDate: '2024-01-16', warningLevel: '1 week' },
+  { id: 7, name: 'Bananas', expiry: 3, emoji: '🍌', urgent: true, category: 'fruits', quantity: '6', purchaseDate: '2024-01-10', riskScore: 80, price: 2.00, expiryDate: '2024-01-14', warningLevel: '1 week' },
+  { id: 8, name: 'Chicken', expiry: 2, emoji: '🍗', urgent: true, category: 'protein', quantity: '500g', purchaseDate: '2024-01-11', riskScore: 88, price: 6.00, expiryDate: '2024-01-13', warningLevel: '1 week' },
+  { id: 9, name: 'Rice', expiry: 90, emoji: '🍚', urgent: false, category: 'grains', quantity: '5kg', purchaseDate: '2024-01-01', riskScore: 10, price: 8.00, expiryDate: '2024-04-01', warningLevel: '3 months' },
+  { id: 10, name: 'Pasta', expiry: 60, emoji: '🍝', urgent: false, category: 'grains', quantity: '1kg', purchaseDate: '2024-01-05', riskScore: 15, price: 3.00, expiryDate: '2024-03-05', warningLevel: '1 month' },
+];
+
+const STORAGE_KEY = 'smartKitchen_pantryItems';
+
 export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
   const [activeTab, setActiveTab] = useState<'pantry' | 'recipes' | 'planner' | 'ai-insights' | 'optimizer' | 'chatbot' | 'sdg' | 'inventory'>('pantry');
   const [showOCRDialog, setShowOCRDialog] = useState(false);
@@ -22,24 +52,163 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
   const [ocrResults, setOcrResults] = useState<Array<{name: string, quantity: string, expiry?: string, confidence: number}>>([]);
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
   const [chatInput, setChatInput] = useState('');
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'es' | 'fr' | 'bn'>('en');
   const [inventoryView, setInventoryView] = useState<'household' | 'business' | 'government'>('household');
   const [userType, setUserType] = useState<'household' | 'business' | 'restaurant'>('household');
+  const [pantryItems, setPantryItems] = useState<PantryItem[]>([]);
+  const [showAddDialog, setShowAddDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editingItem, setEditingItem] = useState<PantryItem | null>(null);
+  const [newItem, setNewItem] = useState({
+    name: '',
+    emoji: '🥘',
+    category: 'other',
+    quantity: '',
+    price: 0,
+    purchaseDate: new Date().toISOString().split('T')[0],
+    expiryDate: '',
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const pantryItems = [
-    { id: 1, name: 'Milk', expiry: 2, emoji: '🥛', urgent: true, category: 'dairy', quantity: '1L', purchaseDate: '2024-01-10', riskScore: 85, price: 3.50, expiryDate: '2024-01-13', warningLevel: '1 week' },
-    { id: 2, name: 'Eggs', expiry: 3, emoji: '🥚', urgent: true, category: 'protein', quantity: '12', purchaseDate: '2024-01-10', riskScore: 75, price: 4.00, expiryDate: '2024-01-14', warningLevel: '1 week' },
-    { id: 3, name: 'Tomatoes', expiry: 4, emoji: '🍅', urgent: false, category: 'vegetables', quantity: '500g', purchaseDate: '2024-01-09', riskScore: 60, price: 2.50, expiryDate: '2024-01-15', warningLevel: '1 week' },
-    { id: 4, name: 'Bread', expiry: 1, emoji: '🍞', urgent: true, category: 'grains', quantity: '1 loaf', purchaseDate: '2024-01-11', riskScore: 90, price: 2.00, expiryDate: '2024-01-12', warningLevel: '1 week' },
-    { id: 5, name: 'Cheese', expiry: 7, emoji: '🧀', urgent: false, category: 'dairy', quantity: '200g', purchaseDate: '2024-01-08', riskScore: 40, price: 5.00, expiryDate: '2024-01-18', warningLevel: '3 weeks' },
-    { id: 6, name: 'Carrots', expiry: 5, emoji: '🥕', urgent: false, category: 'vegetables', quantity: '1kg', purchaseDate: '2024-01-09', riskScore: 50, price: 1.50, expiryDate: '2024-01-16', warningLevel: '1 week' },
-    { id: 7, name: 'Bananas', expiry: 3, emoji: '🍌', urgent: true, category: 'fruits', quantity: '6', purchaseDate: '2024-01-10', riskScore: 80, price: 2.00, expiryDate: '2024-01-14', warningLevel: '1 week' },
-    { id: 8, name: 'Chicken', expiry: 2, emoji: '🍗', urgent: true, category: 'protein', quantity: '500g', purchaseDate: '2024-01-11', riskScore: 88, price: 6.00, expiryDate: '2024-01-13', warningLevel: '1 week' },
-    { id: 9, name: 'Rice', expiry: 90, emoji: '🍚', urgent: false, category: 'grains', quantity: '5kg', purchaseDate: '2024-01-01', riskScore: 10, price: 8.00, expiryDate: '2024-04-01', warningLevel: '3 months' },
-    { id: 10, name: 'Pasta', expiry: 60, emoji: '🍝', urgent: false, category: 'grains', quantity: '1kg', purchaseDate: '2024-01-05', riskScore: 15, price: 3.00, expiryDate: '2024-03-05', warningLevel: '1 month' },
-  ];
+  // Load from sessionStorage on mount
+  useEffect(() => {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setPantryItems(parsed);
+      } catch (e) {
+        setPantryItems(defaultPantryItems);
+        saveToSessionStorage(defaultPantryItems);
+      }
+    } else {
+      setPantryItems(defaultPantryItems);
+      saveToSessionStorage(defaultPantryItems);
+    }
+  }, []);
+
+  // Save to sessionStorage whenever pantryItems changes
+  const saveToSessionStorage = (items: PantryItem[]) => {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  };
+
+  // Reset form when add dialog opens
+  useEffect(() => {
+    if (showAddDialog) {
+      setNewItem({
+        name: '',
+        emoji: '🥘',
+        category: 'other',
+        quantity: '',
+        price: 0,
+        purchaseDate: new Date().toISOString().split('T')[0],
+        expiryDate: '',
+      });
+    }
+  }, [showAddDialog]);
+
+  // Calculate expiry days and other derived fields
+  const calculateItemFields = (item: Partial<PantryItem>): PantryItem => {
+    const purchaseDate = new Date(item.purchaseDate || new Date().toISOString().split('T')[0]);
+    const expiryDate = new Date(item.expiryDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    expiryDate.setHours(0, 0, 0, 0);
+    const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    let warningLevel = 'safe';
+    if (daysUntilExpiry <= 7) warningLevel = '1 week';
+    else if (daysUntilExpiry <= 21) warningLevel = '3 weeks';
+    else if (daysUntilExpiry <= 30) warningLevel = '1 month';
+    else if (daysUntilExpiry <= 90) warningLevel = '3 months';
+
+    const riskScore = Math.max(0, Math.min(100, 100 - (daysUntilExpiry * 1.5)));
+    const urgent = daysUntilExpiry <= 3;
+
+    return {
+      id: item.id || Date.now() + Math.random(),
+      name: item.name || '',
+      expiry: daysUntilExpiry,
+      emoji: item.emoji || '🥘',
+      urgent,
+      category: item.category || 'other',
+      quantity: item.quantity || '',
+      purchaseDate: item.purchaseDate || new Date().toISOString().split('T')[0],
+      riskScore: Math.round(riskScore),
+      price: item.price || 0,
+      expiryDate: item.expiryDate || expiryDate.toISOString().split('T')[0],
+      warningLevel,
+    };
+  };
+
+  // CRUD Operations
+  const handleAddItem = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newItem.name || !newItem.expiryDate) {
+      return;
+    }
+    
+    const item = calculateItemFields(newItem);
+    const updated = [...pantryItems, item];
+    setPantryItems(updated);
+    saveToSessionStorage(updated);
+    
+    // Reset form and close dialog
+    setNewItem({
+      name: '',
+      emoji: '🥘',
+      category: 'other',
+      quantity: '',
+      price: 0,
+      purchaseDate: new Date().toISOString().split('T')[0],
+      expiryDate: '',
+    });
+    setShowAddDialog(false);
+  };
+
+  const handleEditItem = (item: PantryItem) => {
+    setEditingItem(item);
+    setNewItem({
+      name: item.name,
+      emoji: item.emoji,
+      category: item.category,
+      quantity: item.quantity,
+      price: item.price,
+      purchaseDate: item.purchaseDate,
+      expiryDate: item.expiryDate,
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleUpdateItem = () => {
+    if (!editingItem || !newItem.name || !newItem.expiryDate) return;
+    
+    const updatedItem = calculateItemFields({ ...editingItem, ...newItem });
+    const updated = pantryItems.map(item => 
+      item.id === editingItem.id ? updatedItem : item
+    );
+    setPantryItems(updated);
+    saveToSessionStorage(updated);
+    setShowEditDialog(false);
+    setEditingItem(null);
+    setNewItem({
+      name: '',
+      emoji: '🥘',
+      category: 'other',
+      quantity: '',
+      price: 0,
+      purchaseDate: new Date().toISOString().split('T')[0],
+      expiryDate: '',
+    });
+  };
+
+  const handleDeleteItem = (id: number) => {
+    const updated = pantryItems.filter(item => item.id !== id);
+    setPantryItems(updated);
+    saveToSessionStorage(updated);
+  };
 
   // AI Consumption Pattern Data
   const consumptionPatterns = {
@@ -201,49 +370,112 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
 
   const confirmOCRResults = (confirmedItems: typeof ocrResults) => {
     // Add confirmed items to pantry
-    console.log('Adding items to pantry:', confirmedItems);
+    const itemsToAdd: PantryItem[] = confirmedItems.map(result => {
+      const expiryDate = result.expiry || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      return calculateItemFields({
+        name: result.name,
+        emoji: getEmojiForCategory(result.name),
+        category: getCategoryForName(result.name),
+        quantity: result.quantity,
+        price: 0,
+        purchaseDate: new Date().toISOString().split('T')[0],
+        expiryDate,
+      });
+    });
+    
+    const updated = [...pantryItems, ...itemsToAdd];
+    setPantryItems(updated);
+    saveToSessionStorage(updated);
     setShowOCRDialog(false);
     setOcrResults([]);
     setOcrImage(null);
   };
 
-  const handleChatSend = () => {
-    if (!chatInput.trim()) return;
-    const userMessage = { role: 'user' as const, content: chatInput };
-    setChatMessages([...chatMessages, userMessage]);
-    const currentInput = chatInput;
-    setChatInput('');
+  // Helper functions for OCR
+  const getEmojiForCategory = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes('milk') || lower.includes('cheese') || lower.includes('yogurt')) return '🥛';
+    if (lower.includes('egg')) return '🥚';
+    if (lower.includes('tomato')) return '🍅';
+    if (lower.includes('bread')) return '🍞';
+    if (lower.includes('carrot')) return '🥕';
+    if (lower.includes('banana')) return '🍌';
+    if (lower.includes('chicken') || lower.includes('meat')) return '🍗';
+    if (lower.includes('rice')) return '🍚';
+    if (lower.includes('pasta')) return '🍝';
+    return '🥘';
+  };
+
+  const getCategoryForName = (name: string): string => {
+    const lower = name.toLowerCase();
+    if (lower.includes('milk') || lower.includes('cheese') || lower.includes('yogurt')) return 'dairy';
+    if (lower.includes('egg') || lower.includes('chicken') || lower.includes('meat')) return 'protein';
+    if (lower.includes('tomato') || lower.includes('carrot') || lower.includes('vegetable')) return 'vegetables';
+    if (lower.includes('banana') || lower.includes('fruit')) return 'fruits';
+    if (lower.includes('bread') || lower.includes('rice') || lower.includes('pasta')) return 'grains';
+    return 'other';
+  };
+
+  const handleChatSend = async () => {
+    if (!chatInput.trim() || isLoadingChat) return;
     
-    // Enhanced AI response with context awareness
-    setTimeout(() => {
-      const lowerInput = currentInput.toLowerCase();
-      let response = '';
+    const userMessage = { role: 'user' as const, content: chatInput };
+    const currentInput = chatInput;
+    
+    // Add user message immediately
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsLoadingChat(true);
+    
+    try {
+      // Call the backend API
+      const response = await fetch('http://localhost:8080/api/chat', {
+        method: 'POST',
+        headers: {
+          'accept': '*/*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: currentInput,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
       
-      // Enhanced responses with contextual memory
-      if (lowerInput.includes('waste') || lowerInput.includes('waste reduction')) {
-        response = 'To reduce food waste, try meal planning, using FIFO (First In First Out), and storing items properly. Based on your consumption patterns, I notice you have high fruit intake on weekends. Consider spreading it throughout the week. I can help you create a meal plan based on your pantry!';
-      } else if (lowerInput.includes('nutrition') || lowerInput.includes('nutrient')) {
-        response = 'For balanced nutrition, aim for 5 servings of vegetables, 2 servings of fruits, and adequate protein daily. Your current intake shows you need more vegetables (currently 21 vs recommended 35 servings/week). I can suggest recipes to boost your vegetable intake!';
-      } else if (lowerInput.includes('budget') || lowerInput.includes('cost')) {
-        response = 'I can optimize your meal plan to fit your budget while using items from your pantry. Your current weekly cost is $58.50, which is under your $60 budget. Would you like me to generate a more cost-effective weekly plan?';
-      } else if (lowerInput.includes('leftover') || lowerInput.includes('left over')) {
-        response = 'Great ways to transform leftovers: turn rice into fried rice, make soups from vegetables, create wraps from proteins, or blend into smoothies! Based on your pantry, you could make a delicious omelette with your expiring eggs and vegetables.';
-      } else if (lowerInput.includes('share') || lowerInput.includes('donate') || lowerInput.includes('surplus')) {
-        response = 'You can share surplus food through local community apps, food banks, or neighbors. I can help you find nearby sharing opportunities. I see you have items expiring soon - would you like to see donation options?';
-      } else if (lowerInput.includes('environment') || lowerInput.includes('impact') || lowerInput.includes('climate')) {
-        response = 'Food waste contributes to 8% of global greenhouse gas emissions. By reducing waste, you\'re helping combat climate change and save resources. Your current waste projection is 450g/week, which is below the community average of 2500g/week - great job!';
-      } else if (lowerInput.includes('recipe') || lowerInput.includes('cook') || lowerInput.includes('meal')) {
-        response = 'I can suggest recipes based on your pantry items! I notice you have items expiring soon: Milk (2 days), Bread (1 day), and Chicken (2 days). Would you like recipe suggestions using these items?';
-      } else if (lowerInput.includes('expir') || lowerInput.includes('expiring') || lowerInput.includes('expiry')) {
-        response = 'You have several items expiring soon. Items with high risk: Bread (1 day, 90% risk), Chicken (2 days, 88% risk), Milk (2 days, 85% risk). I recommend using these items first. Would you like recipe suggestions?';
-      } else if (lowerInput.includes('pattern') || lowerInput.includes('trend') || lowerInput.includes('consumption')) {
-        response = 'Your consumption patterns show: High fruit intake on weekends (5-6 servings), Low vegetable intake overall (21 vs 35 recommended), Balanced protein intake. I can help you optimize these patterns!';
+      // Extract the response message from the backend
+      let assistantMessage = '';
+      if (typeof data === 'string') {
+        assistantMessage = data;
+      } else if (data.message) {
+        assistantMessage = data.message;
+      } else if (data.response) {
+        assistantMessage = data.response;
+      } else if (data.text) {
+        assistantMessage = data.text;
       } else {
-        response = 'I\'m NourishBot, your AI assistant for food waste reduction, nutrition balancing, budget meal planning, creative leftover ideas, local food sharing, and environmental impact guidance. How can I assist you today?';
+        // If the response is an object, try to stringify it or use a default message
+        assistantMessage = JSON.stringify(data);
       }
       
-      setChatMessages(prev => [...prev, { role: 'assistant', content: response }]);
-    }, 500);
+      setChatMessages(prev => [...prev, { role: 'assistant', content: assistantMessage }]);
+    } catch (error) {
+      console.error('Error calling chat API:', error);
+      // Show error message to user
+      const errorMessage = error instanceof Error 
+        ? `Sorry, I encountered an error: ${error.message}. Please make sure the backend server is running at http://localhost:8080`
+        : 'Sorry, I encountered an error. Please try again later.';
+      
+      setChatMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: errorMessage 
+      }]);
+    } finally {
+      setIsLoadingChat(false);
+    }
   };
 
   useEffect(() => {
@@ -340,7 +572,7 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
         </div>
       </div>
 
-          {/* Language Selector */}
+      {/* Language Selector */}
       <div className="px-6 pt-2 flex justify-end">
         <div className="flex gap-1 bg-white/70 rounded-lg p-1">
           {(['en', 'es', 'fr', 'bn'] as const).map((lang) => (
@@ -470,17 +702,24 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
           </motion.div>
 
           {/* Add Item Buttons */}
-          <div className="flex gap-2 mb-4">
-            <Button 
-              onClick={() => fileInputRef.current?.click()}
-              className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-2xl py-5 flex items-center justify-center gap-2"
+          <div className="mb-4 relative z-10 flex gap-3">
+            <Button
+              type="button"
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white rounded-2xl py-5 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg"
             >
               <Camera className="w-5 h-5" />
               Scan with OCR
             </Button>
-            <Button className="flex-1 bg-green-500 hover:bg-green-600 text-white rounded-2xl py-5 flex items-center justify-center gap-2">
+            <Button
+              type="button"
+              onClick={() => setShowAddDialog(true)}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl py-5 flex items-center justify-center gap-2 font-medium shadow-md hover:shadow-lg"
+            >
               <Plus className="w-5 h-5" />
-              Add Manually
+              Add Food
             </Button>
           </div>
           <input
@@ -496,7 +735,7 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
           <div className="space-y-3">
             {pantryItems.map((item, idx) => (
               <motion.div
-                key={idx}
+                key={item.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 * idx }}
@@ -553,7 +792,18 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
                         <DollarSign className="w-4 h-4" />
                       </Button>
                     )}
-                    <Button className="bg-transparent hover:bg-red-100 text-red-600 p-2 rounded-full">
+                    <Button 
+                      onClick={() => handleEditItem(item)}
+                      className="bg-transparent hover:bg-blue-100 text-blue-600 p-2 rounded-full"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </Button>
+                    <Button 
+                      onClick={() => handleDeleteItem(item.id)}
+                      className="bg-transparent hover:bg-red-100 text-red-600 p-2 rounded-full"
+                      title="Delete"
+                    >
                       <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
@@ -1219,7 +1469,7 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
                     </button>
                   ))}
                 </div>
-              </div>
+            </div>
             )}
             {chatMessages.map((msg, idx) => (
               <motion.div
@@ -1239,6 +1489,18 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
                 </div>
               </motion.div>
             ))}
+            {isLoadingChat && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start"
+              >
+                <div className="max-w-[80%] rounded-2xl p-4 bg-white/70 text-green-900 flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Thinking...</span>
+                </div>
+              </motion.div>
+            )}
             <div ref={chatEndRef} />
           </div>
 
@@ -1246,15 +1508,21 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
             <Input
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleChatSend()}
+              onKeyPress={(e) => e.key === 'Enter' && !isLoadingChat && handleChatSend()}
               placeholder="Ask about food waste, nutrition, meal planning..."
               className="flex-1 rounded-2xl"
+              disabled={isLoadingChat}
             />
             <Button
               onClick={handleChatSend}
-              className="bg-green-600 hover:bg-green-700 text-white rounded-2xl px-6"
+              disabled={isLoadingChat || !chatInput.trim()}
+              className="bg-green-600 hover:bg-green-700 text-white rounded-2xl px-6 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Send className="w-5 h-5" />
+              {isLoadingChat ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Send className="w-5 h-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -1411,7 +1679,7 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
                     <Line type="monotone" dataKey="dinner" stroke="#ef4444" name="Dinner" />
                   </LineChart>
                 </ResponsiveContainer>
-              </div>
+            </div>
             )}
             {inventoryView === 'government' && (
               <div className="space-y-3">
@@ -1507,6 +1775,262 @@ export function SmartKitchen({ user, onBack }: SmartKitchenProps) {
                 setShowOCRDialog(false);
                 setOcrResults([]);
                 setOcrImage(null);
+              }}
+              variant="outline"
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Item Dialog */}
+      <Dialog 
+        open={showAddDialog} 
+        onOpenChange={(open) => {
+          setShowAddDialog(open);
+          if (!open) {
+            // Reset form when dialog closes
+            setNewItem({
+              name: '',
+              emoji: '🥘',
+              category: 'other',
+              quantity: '',
+              price: 0,
+              purchaseDate: new Date().toISOString().split('T')[0],
+              expiryDate: '',
+            });
+          }
+        }}
+      >
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto z-[100]">
+          <DialogHeader>
+            <DialogTitle>Add New Item</DialogTitle>
+            <DialogDescription>
+              Add a new item to your pantry (stored in session storage)
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddItem} className="space-y-4">
+            <div>
+              <label htmlFor="item-name" className="text-sm font-medium text-green-900 mb-1 block">Item Name *</label>
+              <Input
+                id="item-name"
+                value={newItem.name}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                placeholder="e.g., Milk, Bread, Eggs"
+                className="rounded-lg bg-white/70 border-green-300"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="item-emoji" className="text-sm font-medium text-green-900 mb-1 block">Emoji</label>
+              <Input
+                id="item-emoji"
+                value={newItem.emoji}
+                onChange={(e) => setNewItem({ ...newItem, emoji: e.target.value })}
+                placeholder="🥛"
+                maxLength={2}
+                className="rounded-lg bg-white/70 border-green-300"
+              />
+            </div>
+            <div>
+              <label htmlFor="item-category" className="text-sm font-medium text-green-900 mb-1 block">Category</label>
+              <select
+                id="item-category"
+                value={newItem.category}
+                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                className="w-full rounded-lg border border-green-300 px-3 py-2 text-sm bg-white/70"
+              >
+                <option value="dairy">Dairy</option>
+                <option value="protein">Protein</option>
+                <option value="vegetables">Vegetables</option>
+                <option value="fruits">Fruits</option>
+                <option value="grains">Grains</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="item-quantity" className="text-sm font-medium text-green-900 mb-1 block">Quantity</label>
+              <Input
+                id="item-quantity"
+                value={newItem.quantity}
+                onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                placeholder="e.g., 1L, 500g, 12"
+                className="rounded-lg bg-white/70 border-green-300"
+              />
+            </div>
+            <div>
+              <label htmlFor="item-price" className="text-sm font-medium text-green-900 mb-1 block">Price ($)</label>
+              <Input
+                id="item-price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={newItem.price || ''}
+                onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                placeholder="0.00"
+                className="rounded-lg bg-white/70 border-green-300"
+              />
+            </div>
+            <div>
+              <label htmlFor="item-purchase-date" className="text-sm font-medium text-green-900 mb-1 block">Purchase Date</label>
+              <Input
+                id="item-purchase-date"
+                type="date"
+                value={newItem.purchaseDate}
+                onChange={(e) => setNewItem({ ...newItem, purchaseDate: e.target.value })}
+                className="rounded-lg bg-white/70 border-green-300"
+              />
+            </div>
+            <div>
+              <label htmlFor="item-expiry-date" className="text-sm font-medium text-green-900 mb-1 block">Expiry Date *</label>
+              <Input
+                id="item-expiry-date"
+                type="date"
+                value={newItem.expiryDate}
+                onChange={(e) => setNewItem({ ...newItem, expiryDate: e.target.value })}
+                className="rounded-lg bg-white/70 border-green-300"
+                required
+              />
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button
+                type="submit"
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                disabled={!newItem.name || !newItem.expiryDate}
+              >
+                Add Item
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setShowAddDialog(false);
+                  setNewItem({
+                    name: '',
+                    emoji: '🥘',
+                    category: 'other',
+                    quantity: '',
+                    price: 0,
+                    purchaseDate: new Date().toISOString().split('T')[0],
+                    expiryDate: '',
+                  });
+                }}
+                variant="outline"
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Item</DialogTitle>
+            <DialogDescription>
+              Update item details
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Item Name *</label>
+              <Input
+                value={newItem.name}
+                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                placeholder="e.g., Milk, Bread, Eggs"
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Emoji</label>
+              <Input
+                value={newItem.emoji}
+                onChange={(e) => setNewItem({ ...newItem, emoji: e.target.value })}
+                placeholder="🥛"
+                maxLength={2}
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Category</label>
+              <select
+                value={newItem.category}
+                onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              >
+                <option value="dairy">Dairy</option>
+                <option value="protein">Protein</option>
+                <option value="vegetables">Vegetables</option>
+                <option value="fruits">Fruits</option>
+                <option value="grains">Grains</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Quantity</label>
+              <Input
+                value={newItem.quantity}
+                onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                placeholder="e.g., 1L, 500g, 12"
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Price ($)</label>
+              <Input
+                type="number"
+                step="0.01"
+                value={newItem.price}
+                onChange={(e) => setNewItem({ ...newItem, price: parseFloat(e.target.value) || 0 })}
+                placeholder="0.00"
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Purchase Date</label>
+              <Input
+                type="date"
+                value={newItem.purchaseDate}
+                onChange={(e) => setNewItem({ ...newItem, purchaseDate: e.target.value })}
+                className="rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-green-900 mb-1 block">Expiry Date *</label>
+              <Input
+                type="date"
+                value={newItem.expiryDate}
+                onChange={(e) => setNewItem({ ...newItem, expiryDate: e.target.value })}
+                className="rounded-lg"
+                required
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button
+              onClick={handleUpdateItem}
+              className="flex-1 bg-green-600 hover:bg-green-700"
+              disabled={!newItem.name || !newItem.expiryDate}
+            >
+              Update Item
+            </Button>
+            <Button
+              onClick={() => {
+                setShowEditDialog(false);
+                setEditingItem(null);
+                setNewItem({
+                  name: '',
+                  emoji: '🥘',
+                  category: 'other',
+                  quantity: '',
+                  price: 0,
+                  purchaseDate: new Date().toISOString().split('T')[0],
+                  expiryDate: '',
+                });
               }}
               variant="outline"
               className="flex-1"

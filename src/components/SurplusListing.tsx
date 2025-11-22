@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { ArrowLeft, Camera, Clock, MapPin, Tag, Upload, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Upload, CheckCircle, Edit, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -12,19 +12,171 @@ interface SurplusListingProps {
   onBack: () => void;
 }
 
+interface Listing {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  pickupTime: string;
+  createdAt: string;
+  user: string;
+  distance: string;
+  image: string;
+}
+
+const STORAGE_KEY = 'surplusListings';
+
+const categoryMap: Record<string, string> = {
+  vegetables: 'Vegetables',
+  fruits: 'Fruits',
+  bread: 'Bakery',
+  cooked: 'Cooked',
+  dairy: 'Dairy',
+  other: 'Other'
+};
+
+const categoryEmoji: Record<string, string> = {
+  vegetables: '🍅',
+  fruits: '🍎',
+  bread: '🥖',
+  cooked: '🍚',
+  dairy: '🥛',
+  other: '🥘'
+};
+
 export function SurplusListing({ user, onBack }: SurplusListingProps) {
-  const [step, setStep] = useState<'list' | 'create' | 'success'>('list');
+  const [step, setStep] = useState<'list' | 'create' | 'edit' | 'success'>('list');
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [category, setCategory] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [pickupTime, setPickupTime] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Load listings from localStorage
+  useEffect(() => {
+    const savedListings = localStorage.getItem(STORAGE_KEY);
+    if (savedListings) {
+      setListings(JSON.parse(savedListings));
+    } else {
+      // Initialize with default listings
+      const defaultListings: Listing[] = [
+        { id: '1', title: 'Fresh Tomatoes & Cucumbers', user: 'Sarah Martinez', distance: '0.3 km', createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), category: 'vegetables', description: 'Fresh vegetables from garden', pickupTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), image: '🍅' },
+        { id: '2', title: 'Whole Wheat Bread', user: 'Green Bakery', distance: '0.5 km', createdAt: new Date(Date.now() - 30 * 60 * 1000).toISOString(), category: 'bread', description: 'Freshly baked whole wheat bread', pickupTime: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(), image: '🥖' },
+        { id: '3', title: 'Cooked Biryani (5 portions)', user: 'Spice Palace Restaurant', distance: '0.8 km', createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(), category: 'cooked', description: 'Delicious biryani, freshly prepared', pickupTime: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(), image: '🍚' },
+        { id: '4', title: 'Fresh Apples', user: 'John\'s Orchard', distance: '1.2 km', createdAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(), category: 'fruits', description: 'Organic fresh apples', pickupTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), image: '🍎' },
+        { id: '5', title: 'Dairy Products', user: 'Local Dairy', distance: '1.5 km', createdAt: new Date(Date.now() - 3 * 60 * 60 * 1000).toISOString(), category: 'dairy', description: 'Fresh dairy products', pickupTime: new Date(Date.now() + 36 * 60 * 60 * 1000).toISOString(), image: '🥛' },
+      ];
+      setListings(defaultListings);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultListings));
+    }
+  }, []);
+
+  // Save listings to localStorage
+  const saveListings = (newListings: Listing[]) => {
+    setListings(newListings);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(newListings));
+  };
+
+  // Format time ago
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  // Create new listing
+  const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
+    // Convert datetime-local to ISO string
+    const pickupTimeISO = pickupTime ? new Date(pickupTime).toISOString() : new Date().toISOString();
+    const newListing: Listing = {
+      id: Date.now().toString(),
+      title,
+      description,
+      category,
+      pickupTime: pickupTimeISO,
+      createdAt: new Date().toISOString(),
+      user: user?.name || 'You',
+      distance: '0.0 km',
+      image: categoryEmoji[category] || '🥘'
+    };
+    saveListings([newListing, ...listings]);
+    resetForm();
     setStep('success');
     setTimeout(() => {
-      onBack();
+      setStep('list');
     }, 2000);
+  };
+
+  // Update existing listing
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId) return;
+    
+    // Convert datetime-local to ISO string
+    const pickupTimeISO = pickupTime ? new Date(pickupTime).toISOString() : new Date().toISOString();
+    const updatedListings = listings.map(listing =>
+      listing.id === editingId
+        ? { ...listing, title, description, category, pickupTime: pickupTimeISO, image: categoryEmoji[category] || '🥘' }
+        : listing
+    );
+    saveListings(updatedListings);
+    resetForm();
+    setEditingId(null);
+    setStep('success');
+    setTimeout(() => {
+      setStep('list');
+    }, 2000);
+  };
+
+  // Delete listing
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this listing?')) {
+      const updatedListings = listings.filter(listing => listing.id !== id);
+      saveListings(updatedListings);
+    }
+  };
+
+  // Start editing
+  const handleEdit = (listing: Listing) => {
+    setEditingId(listing.id);
+    setTitle(listing.title);
+    setDescription(listing.description);
+    setCategory(listing.category);
+    // Convert ISO string to datetime-local format (YYYY-MM-DDTHH:mm)
+    const date = new Date(listing.pickupTime);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    setPickupTime(`${year}-${month}-${day}T${hours}:${minutes}`);
+    setStep('edit');
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setTitle('');
+    setDescription('');
+    setCategory('');
+    setPickupTime('');
+    setEditingId(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    if (step === 'edit') {
+      handleUpdate(e);
+    } else {
+      handleCreate(e);
+    }
   };
 
   if (step === 'success') {
@@ -45,38 +197,27 @@ export function SurplusListing({ user, onBack }: SurplusListingProps) {
     );
   }
 
-  if (step === 'create') {
+  if (step === 'create' || step === 'edit') {
     return (
       <div className="min-h-screen pb-20" style={{ backgroundColor: '#C1E2BE' }}>
         {/* Header */}
         <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-green-200 px-6 py-4">
           <div className="flex items-center gap-3">
             <Button
-              onClick={() => setStep('list')}
+              onClick={() => {
+                setStep('list');
+                resetForm();
+              }}
               className="bg-transparent hover:bg-green-100 text-green-800 p-2 rounded-full"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-xl text-green-900">Create Listing</h1>
+            <h1 className="text-xl text-green-900">{step === 'edit' ? 'Edit Listing' : 'Create Listing'}</h1>
           </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 pt-6 space-y-6">
-          {/* Photo Upload */}
-          <div>
-            <Label className="text-green-800">Photos</Label>
-            <div className="mt-2 grid grid-cols-3 gap-3">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="aspect-square bg-white/70 backdrop-blur-sm rounded-2xl flex flex-col items-center justify-center cursor-pointer border-2 border-dashed border-green-300 shadow-md"
-              >
-                <Camera className="w-8 h-8 text-green-600 mb-1" />
-                <span className="text-xs text-green-600">Add Photo</span>
-              </motion.div>
-            </div>
-          </div>
-
           {/* Title */}
           <div>
             <Label htmlFor="title" className="text-green-800">Title</Label>
@@ -153,7 +294,7 @@ export function SurplusListing({ user, onBack }: SurplusListingProps) {
             type="submit"
             className="w-full bg-green-700 hover:bg-green-800 text-white rounded-xl py-6"
           >
-            Post Listing
+            {step === 'edit' ? 'Update Listing' : 'Post Listing'}
           </Button>
         </form>
       </div>
@@ -193,15 +334,9 @@ export function SurplusListing({ user, onBack }: SurplusListingProps) {
         <h2 className="text-lg mb-4 text-green-900">Nearby Surplus Food</h2>
         
         <div className="space-y-3">
-          {[
-            { title: 'Fresh Tomatoes & Cucumbers', user: 'Sarah Martinez', distance: '0.3 km', time: '2h ago', category: 'Vegetables', image: '🍅' },
-            { title: 'Whole Wheat Bread', user: 'Green Bakery', distance: '0.5 km', time: '30m ago', category: 'Bakery', image: '🥖' },
-            { title: 'Cooked Biryani (5 portions)', user: 'Spice Palace Restaurant', distance: '0.8 km', time: '1h ago', category: 'Cooked', image: '🍚' },
-            { title: 'Fresh Apples', user: 'John\'s Orchard', distance: '1.2 km', time: '4h ago', category: 'Fruits', image: '🍎' },
-            { title: 'Dairy Products', user: 'Local Dairy', distance: '1.5 km', time: '3h ago', category: 'Dairy', image: '🥛' },
-          ].map((item, idx) => (
+          {listings.map((item, idx) => (
             <motion.div
-              key={idx}
+              key={item.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * idx }}
@@ -211,10 +346,28 @@ export function SurplusListing({ user, onBack }: SurplusListingProps) {
               <div className="flex gap-4">
                 <div className="text-5xl">{item.image}</div>
                 <div className="flex-1">
-                  <h3 className="text-green-900 mb-1">{item.title}</h3>
+                  <div className="flex items-start justify-between mb-1">
+                    <h3 className="text-green-900">{item.title}</h3>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleEdit(item)}
+                        className="bg-transparent hover:bg-green-100 text-green-700 p-1.5 h-auto rounded-full"
+                        size="sm"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => handleDelete(item.id)}
+                        className="bg-transparent hover:bg-red-100 text-red-600 p-1.5 h-auto rounded-full"
+                        size="sm"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                      {item.category}
+                      {categoryMap[item.category] || item.category}
                     </span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-green-600">
@@ -225,7 +378,7 @@ export function SurplusListing({ user, onBack }: SurplusListingProps) {
                       {item.distance}
                     </span>
                     <span>•</span>
-                    <span>{item.time}</span>
+                    <span>{getTimeAgo(item.createdAt)}</span>
                   </div>
                 </div>
               </div>
